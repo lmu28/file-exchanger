@@ -15,7 +15,7 @@ import static org.exchanger_bot.model.RabbitQueue.*;
 @Component
 @Log4j
 @RequiredArgsConstructor
-public class UpdateController {
+public class UpdateProcessor {// TODO перенести в сервисный слой
 
     public static final String UNSUPPORTED_MESSAGE_TYPE = "You have sent unsupported message type.";
     private static final String FILE_IN_PROCESS = "Your file in process...";

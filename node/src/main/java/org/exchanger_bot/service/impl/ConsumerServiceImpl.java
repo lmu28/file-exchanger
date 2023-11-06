@@ -29,7 +29,7 @@ public class ConsumerServiceImpl implements ConsumerService {
     @Override
     @RabbitListener(queues = TEXT_MESSAGE_UPDATE)
     public void consumeTextMessageUpdate(Update update) {
-        log.info("NODE: text message is received");
+//        log.info("NODE: text message is received");
         mainService.processTextMassage(update);
 
 

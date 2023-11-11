@@ -4,16 +4,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.exchanger_bot.model.AppUser;
 import org.exchanger_bot.model.enums.AppUserState;
-import org.exchanger_bot.service.AppUserService;
+import org.exchanger_bot.repository.AppUserRepository;
+import org.exchanger_bot.service.ConsumerMailService;
+import org.exchanger_bot.service.ProducerMailService;
+import org.exchanger_bot.service.ProducerService;
 import org.exchanger_bot.service.UserManipulationService;
 import org.exchanger_bot.utils.CryptoTools;
+import org.exchanger_bot.utils.dto.MailActivationResp;
 import org.exchanger_bot.utils.dto.UserMailInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.messaging.handler.annotation.Headers;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -25,8 +28,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserManipulationServiceImpl implements UserManipulationService {
 
-    private final AppUserService appUserService;
+
+    @Value("${spring.rabbitmq.queues.verifying-email}")
+    private String verifyingEmailQueue;
+
+    private final AppUserRepository appUserRepository;
     private final CryptoTools cryptoTools;
+    private final ProducerService producerService;
+    private final ProducerMailService producerMailService;
+
 
 
     @Value("${service.mail.uri}")
@@ -37,70 +47,71 @@ public class UserManipulationServiceImpl implements UserManipulationService {
         if (appUser.isActive()) {
             return "Вы уже зарегистрированы";
         } else if (appUser.getEmail() != null) {
-            //TODO предусмотерть возможность отправки повторного email
-            return "Вам уже было отправлено письмо на электронную почту";
+            return "Вам уже был отпрвавлена ссылка на электронную почту." +
+                    "Для повторной отправки введи /retry_mail";
         }
-
-
         appUser.setState(AppUserState.WAIT_FOR_EMAIL);
-        appUserService.save(appUser);
+        appUserRepository.save(appUser);
         return "Введите email";
     }
 
     @Override
     public String setEmail(AppUser appUser, String email) {
+
         try {
             InternetAddress emailAddr = new InternetAddress(email);
             emailAddr.validate();
         } catch (AddressException e) {
             return "Введите, пожалуйста, корректный email. Для отмены команды введите /cancel";
         }
-        Optional<AppUser> optionalAppUser = appUserService.findByEmail(email);
+        Optional<AppUser> optionalAppUser = appUserRepository.findByEmail(email);
 
         if (!optionalAppUser.isPresent()) {
-
-
-            appUser.setEmail(email);
-            appUser.setState(AppUserState.BASIC);
-            appUser = appUserService.save(appUser);
-
             String cryptoUserId = cryptoTools.hashOf(appUser.getId());
-            ResponseEntity<?> response = sendRequestToMailService(cryptoUserId, email);
-
-
-            if (response.getStatusCode() != HttpStatus.OK) {
-                String msg = String.format("Отправка эл. письма на почту %s не удалась.", email);
-                log.error(msg);
-                appUser.setEmail(null);
-                appUserService.save(appUser);
-                return msg;
-            }
-
-
-            return "Вам на почту было отправлено письмо."
-                    + "Перейдите по ссылке в письме для подтверждения регистрации.";
-
+            producerMailService.produce(verifyingEmailQueue, UserMailInfo.builder()
+                    .id(cryptoUserId)
+                    .email(email)
+                    .build());
+            return "Обработка запроса...";
         } else {
             return "Данный email уже используется. Введите другой.";
         }
 
     }
 
-    private ResponseEntity<?> sendRequestToMailService(String cryptoUserId, String email) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        UserMailInfo userMailInfo = UserMailInfo.builder()
-                .id(cryptoUserId)
-                .email(email)
-                .build();
 
-        HttpEntity<?> request = new HttpEntity<>(userMailInfo, headers);
+    @Override
+    public void processIsActivatedEmail(MailActivationResp resp) {
+        long id = cryptoTools.idOf(resp.getCryptoId());
+        String email = resp.getEmail();
+        SendMessage sendMessage = new SendMessage();
 
-        return restTemplate.exchange(mailServiceUri
-                , HttpMethod.POST
-                , request
-                , String.class);
 
+        Optional<AppUser> oAppUser = appUserRepository.findById(id);
+
+        if(!oAppUser.isPresent()){
+            log.error("Node: Error get appUser by id");
+            sendMessage.setText( "Что-то пошло не так");
+            producerService.produceAnswer(sendMessage);
+            return;
+        }
+        AppUser appUser =  oAppUser.get();
+
+        appUser.setState(AppUserState.BASIC);
+
+        if (resp.isSentEmail()){
+            appUser.setEmail(email);
+            String msg = "Вам на почту было отправлено письмо."
+                    + "Перейдите по ссылке в письме для подтверждения регистрации.";
+            sendMessage.setText(msg);
+        }else{
+            String msg = String.format("Отправка эл. письма на почту %s не удалась.", email);
+            sendMessage.setText(msg);
+        }
+        appUserRepository.save(appUser);
+        sendMessage.setChatId(appUser.getTelegramUserId());
+        producerService.produceAnswer(sendMessage);
     }
+
+
 }

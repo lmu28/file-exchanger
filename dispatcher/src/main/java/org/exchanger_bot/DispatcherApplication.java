@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static org.exchanger_bot.model.RabbitQueue.TEXT_MESSAGE_UPDATE;
 
 @SpringBootApplication
 @Log4j

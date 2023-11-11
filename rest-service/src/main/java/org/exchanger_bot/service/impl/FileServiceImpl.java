@@ -6,8 +6,8 @@ import org.apache.commons.io.FileUtils;
 import org.exchanger_bot.model.AppDocument;
 import org.exchanger_bot.model.AppPhoto;
 import org.exchanger_bot.model.BinaryContent;
-import org.exchanger_bot.service.AppDocumentService;
-import org.exchanger_bot.service.AppPhotoService;
+import org.exchanger_bot.repository.AppDocumentRepository;
+import org.exchanger_bot.repository.AppPhotoRepository;
 import org.exchanger_bot.service.FileService;
 import org.exchanger_bot.utils.CryptoTools;
 import org.springframework.core.io.FileSystemResource;
@@ -23,23 +23,31 @@ import java.io.IOException;
 public class FileServiceImpl implements FileService {
 
 
-    private final AppDocumentService appDocumentService;
-    private final AppPhotoService appPhotoService;
+    private final AppDocumentRepository appDocumentRepository;
+    private final AppPhotoRepository appPhotoRepository;
     private final CryptoTools cryptoTools;
 
 
     @Override
-    public AppDocument getDocument(String id) {
-        Long docId = cryptoTools.idOf(id);
-        if (docId == null) return null;
-        return appDocumentService.findById(docId);
+    public AppDocument getDocument(String cryptoId) {
+        long docId;
+        try {
+            docId = cryptoTools.idOf(cryptoId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        return appDocumentRepository.findById(docId).orElse(null);
     }
 
     @Override
-    public AppPhoto getPhoto(String id) {
-        Long photoId = cryptoTools.idOf(id);
-        if (photoId == null) return null;
-        return appPhotoService.findById(photoId);
+    public AppPhoto getPhoto(String cryptoId) {
+        Long photoId;
+        try {
+           photoId = cryptoTools.idOf(cryptoId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        return appPhotoRepository.findById(photoId).orElse(null);
     }
 
     @Override

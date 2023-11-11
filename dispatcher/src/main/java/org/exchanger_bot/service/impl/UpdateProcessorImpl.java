@@ -1,8 +1,11 @@
-package org.exchanger_bot.controller;
+package org.exchanger_bot.service.impl;
 
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
+import org.exchanger_bot.config.RabbitConfig;
+import org.exchanger_bot.controller.TelegramBot;
+import org.exchanger_bot.service.UpdateProcessor;
 import org.exchanger_bot.service.UpdateProducer;
 import org.exchanger_bot.utils.MessageUtils;
 import org.springframework.stereotype.Component;
@@ -10,18 +13,18 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static org.exchanger_bot.model.RabbitQueue.*;
 
 @Component
 @Log4j
 @RequiredArgsConstructor
-public class UpdateProcessor {// TODO перенести в сервисный слой
+public class UpdateProcessorImpl implements UpdateProcessor {
 
     public static final String UNSUPPORTED_MESSAGE_TYPE = "You have sent unsupported message type.";
     private static final String FILE_IN_PROCESS = "Your file in process...";
     private TelegramBot telegramBot;
     private final MessageUtils messageUtils;
     private final UpdateProducer updateProducer;
+    private final RabbitConfig rabbitConfiguration;
 
     public void registerBot(TelegramBot telegramBot){
         this.telegramBot = telegramBot;
@@ -59,17 +62,17 @@ public class UpdateProcessor {// TODO перенести в сервисный �
 
 
     private void processPhotoMessage(Update update) {
-        updateProducer.produce(PHOTO_MESSAGE_UPDATE,update);
+        updateProducer.produce(rabbitConfiguration.getPhotoMessageUpdateQueue(),update);
         setFileInProcessView(update);
     }
 
     private void processDocumentMessage(Update update) {
-        updateProducer.produce(DOC_MESSAGE_UPDATE,update);
+        updateProducer.produce(rabbitConfiguration.getDocMessageUpdateQueue(),update);
         setFileInProcessView(update);
     }
 
     private void processTextMessage(Update update) {
-        updateProducer.produce(TEXT_MESSAGE_UPDATE,update);
+        updateProducer.produce(rabbitConfiguration.getTextMessageUpdateQueue(),update);
     }
 
 

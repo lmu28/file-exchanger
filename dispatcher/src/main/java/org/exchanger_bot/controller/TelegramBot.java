@@ -3,6 +3,7 @@ package org.exchanger_bot.controller;
 import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
+import org.exchanger_bot.service.UpdateProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
@@ -74,11 +75,11 @@ public class TelegramBot extends TelegramWebhookBot {
     }
 
     public void executeSendMessage(SendMessage sendMessage){
-//        try {
-//            execute(sendMessage);
-//        } catch (TelegramApiException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

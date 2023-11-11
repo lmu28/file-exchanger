@@ -28,21 +28,22 @@ public class FileController {
     public ResponseEntity<?> getDoc(@RequestParam("id") String id){
 
         AppDocument appDocument = fileService.getDocument(id);
-        //TODO добавить провреку что ошибка могла произоойти на строне сервера
+        //TODO проверить будет ли работать ControllerAdvice из этого модуля для других модулей
         if(appDocument == null){
             return ResponseEntity.badRequest().build();
         }
-        FileSystemResource fileSystemResource = fileService.getFileSystemResource(
-                appDocument.getBinaryContent());
-
-        if (fileSystemResource == null){
-            ResponseEntity.internalServerError().build();
-        }
+        //TODO посмотреть работает ли новый подход
+//        FileSystemResource fileSystemResource = fileService.getFileSystemResource(
+//                appDocument.getBinaryContent());
+//
+//        if (fileSystemResource == null){
+//            ResponseEntity.internalServerError().build();
+//        }
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(appDocument.getMimeType()))
                 .header("Content-disposition", "attachment; filename=" + appDocument.getDocName())
-                .body(fileSystemResource);
+                .body(appDocument.getBinaryContent().getFileAsArrayOfBytes());
     }
 
 
@@ -51,21 +52,21 @@ public class FileController {
     public ResponseEntity<?> getPhoto(@RequestParam("id") String id){
 
         AppPhoto appPhoto = fileService.getPhoto(id);
-        //TODO добавить провреку что ошибка могла произоойти на строне сервера
+        //TODO проверить будет ли работать ControllerAdvice из этого модуля для других модулей
         if(appPhoto == null){
             return ResponseEntity.badRequest().build();
         }
-        FileSystemResource fileSystemResource = fileService.getFileSystemResource(
-                appPhoto.getBinaryContent());
-
-        if (fileSystemResource == null){
-            ResponseEntity.internalServerError().build();
-        }
+//        FileSystemResource fileSystemResource = fileService.getFileSystemResource(
+//                appPhoto.getBinaryContent());
+//
+//        if (fileSystemResource == null){
+//            ResponseEntity.internalServerError().build();
+//        }
 
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .header("Content-disposition", "attachment; filename=" + System.currentTimeMillis() +".png")
-                .body(fileSystemResource);
+                .body(appPhoto.getBinaryContent().getFileAsArrayOfBytes());
     }
 
 

@@ -6,6 +6,7 @@ import org.exchanger_bot.model.AppDocument;
 import org.exchanger_bot.model.AppPhoto;
 import org.exchanger_bot.model.AppUser;
 import org.exchanger_bot.model.RowData;
+import org.exchanger_bot.repository.AppUserRepository;
 import org.exchanger_bot.service.*;
 import org.exchanger_bot.service.enums.LinkType;
 import org.exchanger_bot.service.exceptions.UploadFileException;
@@ -29,7 +30,7 @@ public class MainServiceImpl implements MainService {
     private final ProducerService producerService;
     private final RowDataService rowDataService;
 
-    private final AppUserService appUserService;
+    private final AppUserRepository appUserRepository;
 
     private final FileService fileService;
 
@@ -46,13 +47,14 @@ public class MainServiceImpl implements MainService {
         if (CANCEL.equals(command)) {
             output = cancelProcess(appUser);
         } else if (BASIC.equals(appUser.getState())) {
-            output = processUserCommand(appUser,command);
-        }else if (WAIT_FOR_EMAIL.equals(appUser.getState())) {
-            output = userManipulationService.setEmail(appUser,command);
+            output = processUserCommand(appUser, command);
+        } else if (WAIT_FOR_EMAIL.equals(appUser.getState())) {
+
+            output = userManipulationService.setEmail(appUser, command);
+
         }
 
-        sendAnswer(output,message.getChatId());
-
+        sendAnswer(output, message.getChatId());
 
 
     }
@@ -76,6 +78,7 @@ public class MainServiceImpl implements MainService {
             sendAnswer(error, chatId);
         }
     }
+
     @Override
     public void processPhotoMassage(Update update) {
         saveRowData(update);
@@ -108,11 +111,11 @@ public class MainServiceImpl implements MainService {
     private AppUser findOrSaveAppUser(Update update) {
         Message message = update.getMessage();
         User telegramUser = message.getFrom();
-        AppUser persistantAppUser = appUserService.findAppUserByTelegramUserId(telegramUser.getId());
+        AppUser persistantAppUser = appUserRepository.findByTelegramUserId(telegramUser.getId());
 
         if (persistantAppUser == null) {
 
-            AppUser transientAppUser = appUserService.save(AppUser.builder()
+            AppUser transientAppUser = appUserRepository.save(AppUser.builder()
                     .id(0)
                     .telegramUserId(telegramUser.getId())
                     .firstName(telegramUser.getFirstName())
@@ -132,7 +135,7 @@ public class MainServiceImpl implements MainService {
 
     private String cancelProcess(AppUser appUser) {
         appUser.setState(BASIC);
-        appUserService.save(appUser);
+        appUserRepository.save(appUser);
         return "Команда отменена";
     }
 
@@ -142,7 +145,7 @@ public class MainServiceImpl implements MainService {
                 + "/registration - регистрация пользователя.";
     }
 
-    private String processUserCommand(AppUser appUser,String command) {
+    private String processUserCommand(AppUser appUser, String command) {
         if (START.equals(command)) {
             return "Здравствуйте! посмотреть информацию о боте можно по команде /help";
 
@@ -152,7 +155,15 @@ public class MainServiceImpl implements MainService {
         } else if (REGISTRATION.equals(command)) {
             return userManipulationService.registerUser(appUser);
 
-        }else {
+        } else if (RETRY_EMAIL.equals(command) && appUser.getEmail() != null ){
+            appUser.setEmail(null);
+            appUser.setState(WAIT_FOR_EMAIL);
+            appUserRepository.save(appUser);
+            return  "Введите email";
+        }
+
+
+        else {
             return "Неизвестаня команда";
         }
     }
@@ -165,12 +176,12 @@ public class MainServiceImpl implements MainService {
     }
 
     private boolean isAllowToSendContent(long chatId, AppUser appUser) {
-        if (WAIT_FOR_EMAIL.equals(appUser.getState())){
-            sendAnswer("Используйте команду /cancel для отправки контента",chatId);
+        if (WAIT_FOR_EMAIL.equals(appUser.getState())) {
+            sendAnswer("Используйте команду /cancel для отправки контента", chatId);
             return false;
         }
-        if (!appUser.isActive()){
-            sendAnswer("Вам нужно зарегистрироваться - /registration",chatId);
+        if (!appUser.isActive()) {
+            sendAnswer("Вам нужно зарегистрироваться - /registration", chatId);
             return false;
         }
 

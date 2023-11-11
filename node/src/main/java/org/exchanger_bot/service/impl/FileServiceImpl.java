@@ -5,6 +5,9 @@ import lombok.extern.log4j.Log4j;
 import org.exchanger_bot.model.AppDocument;
 import org.exchanger_bot.model.AppPhoto;
 import org.exchanger_bot.model.BinaryContent;
+import org.exchanger_bot.repository.AppDocumentRepository;
+import org.exchanger_bot.repository.AppPhotoRepository;
+import org.exchanger_bot.repository.BinaryContentRepository;
 import org.exchanger_bot.service.*;
 import org.exchanger_bot.service.enums.LinkType;
 import org.exchanger_bot.service.exceptions.UploadFileException;
@@ -45,9 +48,9 @@ public class FileServiceImpl implements FileService {
     @Value("${link.address}")
     private String linkAddress;
 
-    private final BinaryContentService binaryContentService;
-    private final AppDocumentService appDocumentService;
-    private final AppPhotoService appPhotoService;
+    private final BinaryContentRepository binaryContentRepository;
+    private final AppDocumentRepository appDocumentRepository;
+    private final AppPhotoRepository appPhotoRepository;
     private final CryptoTools cryptoTools;
 
     @Override
@@ -62,7 +65,7 @@ public class FileServiceImpl implements FileService {
 
             Document telegramDoc = externalMessage.getDocument();
             AppDocument transientAppDoc = buildTransientAppDoc(telegramDoc, persistentBinaryContent);
-            return appDocumentService.save(transientAppDoc);
+            return appDocumentRepository.save(transientAppDoc);
         } else {
             throw new UploadFileException("Bad response from telegram service: " + response);
         }
@@ -83,7 +86,7 @@ public class FileServiceImpl implements FileService {
             BinaryContent persistentBinaryContent =  buildAndSaveBinaryContent(fileInByte);
 
             AppPhoto transientAppPhoto = buildTransientAppPhoto(telegramPhoto, persistentBinaryContent);
-            return appPhotoService.save(transientAppPhoto);
+            return appPhotoRepository.save(transientAppPhoto);
         } else {
             throw new UploadFileException("Bad response from telegram service: " + response);
         }
@@ -119,8 +122,6 @@ public class FileServiceImpl implements FileService {
         } catch (MalformedURLException e) {
             throw new UploadFileException(e);
         }
-
-        //TODO подумать над оптимизацией
         try (InputStream is = urlObj.openStream()) {
             return is.readAllBytes();
         } catch (IOException e) {
@@ -160,7 +161,7 @@ public class FileServiceImpl implements FileService {
         BinaryContent transientBinaryContent = BinaryContent.builder()
                 .fileAsArrayOfBytes(fileInByte)
                 .build();
-        return binaryContentService.save(transientBinaryContent);
+        return binaryContentRepository.save(transientBinaryContent);
     }
 
 

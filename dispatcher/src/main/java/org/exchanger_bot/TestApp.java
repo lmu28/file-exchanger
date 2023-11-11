@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static org.exchanger_bot.model.RabbitQueue.TEXT_MESSAGE_UPDATE;
+
 
 @SpringBootApplication
 public class TestApp {
@@ -23,10 +23,10 @@ public class TestApp {
 //        return args -> template.convertAndSend("myqueue", "foo");
 //    }
 
-    @Bean
-    public Queue myQueue() {
-        return new Queue(TEXT_MESSAGE_UPDATE);
-    }
+//    @Bean
+//    public Queue myQueue() {
+//        return new Queue(TEXT_MESSAGE_UPDATE);
+//    }
 
 //   @RabbitListener(queues =TEXT_MESSAGE_UPDATE)
 //    public void listen(Update in) {

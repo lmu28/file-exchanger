@@ -22,10 +22,11 @@ public class ActivationController {
 
     @RequestMapping(method = RequestMethod.GET, value = "/activation")
     public ResponseEntity<?> activate(@RequestParam("id") String id){
+        if (!userActivationService.existsUser(id)){
+            return ResponseEntity.badRequest().build();
+        }
         boolean activated = userActivationService.activation(id);
-
         if (activated) return ResponseEntity.ok().build();
-        //TODO предусмотреть возможность ввода от пользователя левого хэша Id
         return ResponseEntity.internalServerError().build();
     }
 

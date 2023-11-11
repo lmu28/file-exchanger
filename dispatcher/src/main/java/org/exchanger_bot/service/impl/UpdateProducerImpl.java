@@ -18,7 +18,7 @@ public class UpdateProducerImpl implements UpdateProducer {
 
     @Override
     public void produce(String rabbitQueue, Update update) {
-        log.info("Producing update " +rabbitQueue + ":\n" + update);
+//        log.info("Producing update " +rabbitQueue + ":\n" + update);
         rabbitTemplate.convertAndSend(rabbitQueue,update);
 
     }

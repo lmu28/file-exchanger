@@ -5,7 +5,8 @@ public enum UserCommand {
     HELP("/help"),
     REGISTRATION("/registration"),
     CANCEL("/cancel"),
-    START("/start");
+    START("/start"),
+    RETRY_EMAIL("/retry_mail");
 
     private final String cmd;
 

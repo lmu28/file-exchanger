@@ -49,7 +49,6 @@ public class TelegramBot extends TelegramWebhookBot {
             this.setWebhook(setWebhook);
         } catch (TelegramApiException e) {
             log.error("Error setWebhook to bot");
-            throw new RuntimeException(e);
         }
     }
 

@@ -37,8 +37,7 @@ public class FileServiceImpl implements FileService {
     private String fileInfoUri;
 
 
-    @Value("${service.file_storage.uri}")
-    private String fileStorageUri;
+
 
 
     @Value("${bot.token}")
@@ -51,7 +50,9 @@ public class FileServiceImpl implements FileService {
     private final BinaryContentRepository binaryContentRepository;
     private final AppDocumentRepository appDocumentRepository;
     private final AppPhotoRepository appPhotoRepository;
+    private final RestTemplate restTemplate;
     private final CryptoTools cryptoTools;
+    private final FileDownloader fileDownloader;
 
     @Override
     public AppDocument processDoc(Message externalMessage) {
@@ -60,7 +61,7 @@ public class FileServiceImpl implements FileService {
 
         if (response.getStatusCode() == HttpStatus.OK) {
             String filePath = getFilePathFromJson(response);
-            byte[] fileInByte = downloadFile(filePath);
+            byte[] fileInByte = fileDownloader.downloadFile(filePath);
             BinaryContent persistentBinaryContent =  buildAndSaveBinaryContent(fileInByte);
 
             Document telegramDoc = externalMessage.getDocument();
@@ -82,7 +83,7 @@ public class FileServiceImpl implements FileService {
 
         if (response.getStatusCode() == HttpStatus.OK) {
             String filePath = getFilePathFromJson(response);
-            byte[] fileInByte = downloadFile(filePath);
+            byte[] fileInByte = fileDownloader.downloadFile(filePath);
             BinaryContent persistentBinaryContent =  buildAndSaveBinaryContent(fileInByte);
 
             AppPhoto transientAppPhoto = buildTransientAppPhoto(telegramPhoto, persistentBinaryContent);
@@ -100,7 +101,6 @@ public class FileServiceImpl implements FileService {
     }
 
     private ResponseEntity<String> getFilePath(String fileId) {
-        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         HttpEntity<String> request = new HttpEntity<>(headers);
 
@@ -113,21 +113,7 @@ public class FileServiceImpl implements FileService {
         );
     }
 
-    private byte[] downloadFile(String filePath) {
-        String fullUri = fileStorageUri.replace("{token}",token)
-                .replace("{filePath}", filePath);
-        URL urlObj = null;
-        try {
-            urlObj = new URL(fullUri);
-        } catch (MalformedURLException e) {
-            throw new UploadFileException(e);
-        }
-        try (InputStream is = urlObj.openStream()) {
-            return is.readAllBytes();
-        } catch (IOException e) {
-            throw new UploadFileException(urlObj.toExternalForm(), e);
-        }
-    }
+
 
     private String getFilePathFromJson(ResponseEntity<String> response){
         JSONObject jsonObject = new JSONObject(response.getBody());

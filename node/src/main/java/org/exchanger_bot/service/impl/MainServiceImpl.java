@@ -7,6 +7,7 @@ import org.exchanger_bot.model.AppPhoto;
 import org.exchanger_bot.model.AppUser;
 import org.exchanger_bot.model.RowData;
 import org.exchanger_bot.repository.AppUserRepository;
+import org.exchanger_bot.repository.RowDataRepository;
 import org.exchanger_bot.service.*;
 import org.exchanger_bot.service.enums.LinkType;
 import org.exchanger_bot.service.exceptions.UploadFileException;
@@ -25,10 +26,9 @@ import static org.exchanger_bot.service.enums.UserCommand.*;
 @RequiredArgsConstructor
 @Log4j
 public class MainServiceImpl implements MainService {
-    //TODO реализовать систему миграций баз данных. повешать index на поле email
 
     private final ProducerService producerService;
-    private final RowDataService rowDataService;
+    private final RowDataRepository rowDataRepository;
 
     private final AppUserRepository appUserRepository;
 
@@ -49,14 +49,10 @@ public class MainServiceImpl implements MainService {
         } else if (BASIC.equals(appUser.getState())) {
             output = processUserCommand(appUser, command);
         } else if (WAIT_FOR_EMAIL.equals(appUser.getState())) {
-
             output = userManipulationService.setEmail(appUser, command);
-
         }
 
         sendAnswer(output, message.getChatId());
-
-
     }
 
     @Override
@@ -101,7 +97,7 @@ public class MainServiceImpl implements MainService {
     }
 
     private void saveRowData(Update update) {
-        rowDataService.save(RowData.builder()
+        rowDataRepository.save(RowData.builder()
                 .id(0)
                 .event(update)
                 .build());

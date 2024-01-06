@@ -21,14 +21,6 @@ public class ConsumerServiceImpl implements ConsumerService {
    private final MainService mainService;
 
 
-
-
-
-
-
-
-
-
     @Override
     @RabbitListener(queues = "${spring.rabbitmq.queues.text-message-update}")
     public void consumeTextMessageUpdate(Update update) {

@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j;
 import org.exchanger_bot.model.AppUser;
 import org.exchanger_bot.model.enums.AppUserState;
 import org.exchanger_bot.repository.AppUserRepository;
-import org.exchanger_bot.service.ConsumerMailService;
 import org.exchanger_bot.service.ProducerMailService;
 import org.exchanger_bot.service.ProducerService;
 import org.exchanger_bot.service.UserManipulationService;
@@ -13,9 +12,7 @@ import org.exchanger_bot.utils.CryptoTools;
 import org.exchanger_bot.utils.dto.MailActivationResp;
 import org.exchanger_bot.utils.dto.UserMailInfo;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import javax.mail.internet.AddressException;

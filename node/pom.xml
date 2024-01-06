@@ -18,6 +18,7 @@
         <postgres.version>42.5.0</postgres.version>
         <hibernate-types.version>2.2.2</hibernate-types.version>
         <javax-mail.version>1.4</javax-mail.version>
+<!--        <flyway.version>10.0.0</flyway.version>-->
     </properties>
 
     <dependencies>
@@ -92,22 +93,38 @@
         </dependency>
 
 
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
 
 
 
 
 
     </dependencies>
+
+
+
+
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>9</source>
-                    <target>9</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+
+
+
 </project>

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class GlobalControllerAdvice {
-    @ExceptionHandler(value = Exception.class)
+    @ExceptionHandler(value = RuntimeException.class)
     public ResponseEntity<String> handleException(Exception e) {
         return new ResponseEntity<>("Ошибка на сервере: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
